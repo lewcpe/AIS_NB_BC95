@@ -25,7 +25,9 @@ String sendStr;
 
 void event_null(char *data){}
 
+#if !defined(ARDUINO_AVR_LEONARDO)
 AltSoftSerial myserial;
+#endif
 
 AIS_NB_BC95::AIS_NB_BC95()
 {
@@ -34,8 +36,15 @@ AIS_NB_BC95::AIS_NB_BC95()
 
 void AIS_NB_BC95:: setupDevice(String serverPort)
 {
+#if defined(ARDUINO_AVR_LEONARDO)
+	Serial1.begin(9600);
+	_Serial = &Serial1;
+	while(!Serial1);
+	Serial.println(F("Connecting AIS_NB_BC95 with hardware serial"));
+#else
 	myserial.begin(9600);
     _Serial = &myserial;
+#endif
 
 	Serial.println(F("############ AIS_NB_BC95 Library by AIS/DEVI V1.0.5 ############"));
 	reset();
@@ -474,7 +483,7 @@ UDPReceive AIS_NB_BC95:: waitResponse()
 
   if(en_rcv && (current-previous>=250) && !(_Serial->available()))
   {
-      _Serial->println(F("AT+NSORF=0,100"));
+      _Serial->println(F("AT+NSORF=0,512"));
 	  //Serial.println(F("AT+NSORF=0,100"));
       previous=current;
   }
@@ -504,8 +513,8 @@ UDPReceive AIS_NB_BC95:: waitResponse()
           //if(debug) Serial.println(input);
           if(input.indexOf(F("+NSONMI:"))!=-1)
           {
-            //if(debug) Serial.print(F("found NSONMI "));
-            _Serial->println(F("AT+NSORF=0,100"));
+            if(debug) Serial.print(F("found NSONMI "));
+            _Serial->println(F("AT+NSORF=0,512"));
             input=F("");
             send_NSOMI=true;
           }
